@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { i18n } from '@osd/i18n';
 import { I18nProvider } from '@osd/i18n/react';
 import { BrowserRouter as Router } from 'react-router-dom';
 import {
-  EuiButton,
-  EuiButtonEmpty,
   EuiCallOut,
   EuiFlexGroup,
   EuiFlexItem,
@@ -13,9 +10,6 @@ import {
   EuiLoadingSpinner,
   EuiPage,
   EuiPageBody,
-  EuiPageContent,
-  EuiPageContentBody,
-  EuiPageHeader,
   EuiPanel,
   EuiProgress,
   EuiSideNav,
@@ -26,11 +20,16 @@ import {
   EuiTitle,
   EuiToolTip,
   EuiGlobalToastList,
-  EuiCard,
 } from '@elastic/eui';
 import { CoreStart } from '../../../../src/core/public';
 import { NavigationPublicPluginStart } from '../../../../src/plugins/navigation/public';
-import { PLUGIN_ID, PLUGIN_NAME } from '../../common';
+import { PLUGIN_ID } from '../../common';
+
+interface Toast {
+  id: string;
+  title: string;
+  color: string;
+}
 
 interface SecurityComponentStatus {
   name: string;
@@ -54,7 +53,7 @@ interface MranvAppDeps {
 export const MranvApp = ({ basename, notifications, http, navigation }: MranvAppDeps) => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [selectedItemId, setSelectedItemId] = useState<string>('overview');
-  const [toasts, setToasts] = useState<Array<{ title: string; color: string }>>([]);
+  const [toasts, setToasts] = useState<Toast[]>([]);
   const [lastUpdateTime, setLastUpdateTime] = useState<string>(new Date().toLocaleString());
   const [scanProgress, setScanProgress] = useState<number>(0);
 
@@ -177,12 +176,10 @@ export const MranvApp = ({ basename, notifications, http, navigation }: MranvApp
   };
 
   useEffect(() => {
-    // Simulate initial loading
     setTimeout(() => {
       setIsLoading(false);
     }, 1000);
 
-    // Simulate real-time updates
     const interval = setInterval(() => {
       setComponentStatuses(prev => prev.map(component => ({
         ...component,
@@ -193,12 +190,11 @@ export const MranvApp = ({ basename, notifications, http, navigation }: MranvApp
         events_today: component.scanning ? component.events_today + Math.floor(Math.random() * 2) : component.events_today
       })));
 
-      // Simulate scan progress
       setScanProgress(prev => (prev + 2) % 100);
 
-      // Add random toast messages
       if (Math.random() < 0.3) {
-        const newToast = {
+        const newToast: Toast = {
+          id: new Date().getTime().toString(),
           title: `New threat detected by ${componentStatuses[Math.floor(Math.random() * componentStatuses.length)].name}`,
           color: 'danger'
         };
@@ -212,32 +208,135 @@ export const MranvApp = ({ basename, notifications, http, navigation }: MranvApp
     return () => clearInterval(interval);
   }, []);
 
+  // const renderOverview = () => (
+  //   <EuiPageBody>
+  //     <EuiTitle size="l" className="eui-textCenter">
+  //       <h1>
+  //         <EuiIcon type="securityApp" size="xl" />{' '}
+  //         OpenArmor Security Dashboard
+  //       </h1>
+  //     </EuiTitle>
+
+  //     <EuiSpacer />
+
+  //     <EuiCallOut
+  //       title="System Security Status"
+  //       color="success"
+  //       iconType="checkInCircleFilled"
+  //     >
+  //       <p>All security components are operational. Last update: {lastUpdateTime}</p>
+  //     </EuiCallOut>
+
+  //     <EuiSpacer />
+
+  //     <EuiPanel>
+  //       <EuiTitle size="xs">
+  //         <h3>Active Security Scan</h3>
+  //       </EuiTitle>
+  //       <EuiSpacer size="s" />
+  //       <EuiProgress
+  //         value={scanProgress}
+  //         max={100}
+  //         size="s"
+  //         color="success"
+  //       />
+  //       <EuiText size="xs" color="subdued">
+  //         <p>Progress: {scanProgress}%</p>
+  //       </EuiText>
+  //     </EuiPanel>
+
+  //     <EuiSpacer />
+
+  //     <EuiFlexGroup wrap>
+  //       {componentStatuses.map((component, index) => (
+  //         <EuiFlexItem key={index} style={{ minWidth: '350px' }}>
+  //           <EuiPanel>
+  //             <EuiFlexGroup alignItems="center" gutterSize="s">
+  //               <EuiFlexItem>
+  //                 <EuiTitle size="xs">
+  //                   <h4>{component.name}</h4>
+  //                 </EuiTitle>
+  //                 <EuiSpacer size="s" />
+  //                 <EuiFlexGroup alignItems="center" gutterSize="s">
+  //                   <EuiFlexItem grow={false}>
+  //                     <EuiHealth color="success">{component.status}</EuiHealth>
+  //                   </EuiFlexItem>
+  //                   <EuiFlexItem grow={false}>
+  //                     <EuiToolTip content="CPU Usage">
+  //                       <EuiBadge color={component.cpu > 80 ? 'danger' : 'primary'}>
+  //                         CPU: {Math.round(component.cpu)}%
+  //                       </EuiBadge>
+  //                     </EuiToolTip>
+  //                   </EuiFlexItem>
+  //                   <EuiFlexItem grow={false}>
+  //                     <EuiToolTip content="Memory Usage">
+  //                       <EuiBadge color={component.memory > 80 ? 'danger' : 'warning'}>
+  //                         MEM: {Math.round(component.memory)}%
+  //                       </EuiBadge>
+  //                     </EuiToolTip>
+  //                   </EuiFlexItem>
+  //                 </EuiFlexGroup>
+  //               </EuiFlexItem>
+  //               <EuiFlexItem grow={false}>
+  //                 <EuiStat
+  //                   title={component.detections.toString()}
+  //                   description="Detections"
+  //                   textAlign="right"
+  //                   titleColor={component.detections > 100 ? 'danger' : 'primary'}
+  //                 />
+  //               </EuiFlexItem>
+  //             </EuiFlexGroup>
+  //             {component.scanning && (
+  //               <>
+  //                 <EuiSpacer size="s" />
+  //                 <EuiProgress size="xs" color="accent" />
+  //                 <EuiText size="xs" color="subdued">
+  //                   <p>Active scan in progress...</p>
+  //                 </EuiText>
+  //               </>
+  //             )}
+  //           </EuiPanel>
+  //         </EuiFlexItem>
+  //       ))}
+  //     </EuiFlexGroup>
+  //   </EuiPageBody>
+  // );
+
   const renderOverview = () => (
     <EuiPageBody>
-      <EuiPageHeader>
-        <EuiTitle size="l">
-          <h1>
-            <EuiIcon type="securityApp" size="xl" />{' '}
-            OpenArmor Security Dashboard
-          </h1>
-        </EuiTitle>
-      </EuiPageHeader>
+      <EuiTitle size="l" className="eui-textCenter">
+        <h1>
+          <EuiIcon type="securityApp" size="xl" />{' '}
+          OpenArmor Security Dashboard
+        </h1>
+      </EuiTitle>
 
       <EuiSpacer />
 
       <EuiCallOut
-        title="System Security Status"
+        title={
+          <span>
+            <EuiIcon type="checkInCircleFilled" size="m" style={{ marginRight: '8px' }} />
+            System Security Status
+          </span>
+        }
         color="success"
         iconType="checkInCircleFilled"
       >
-        <p>All security components are operational. Last update: {lastUpdateTime}</p>
+        <p>
+          <EuiIcon type="clock" size="m" style={{ marginRight: '8px' }} />
+          All security components are operational. Last update: {lastUpdateTime}
+        </p>
       </EuiCallOut>
 
       <EuiSpacer />
 
       <EuiPanel>
         <EuiTitle size="xs">
-          <h3>Active Security Scan</h3>
+          <h3>
+            <EuiIcon type="scan" size="m" style={{ marginRight: '8px' }} />
+            Active Security Scan
+          </h3>
         </EuiTitle>
         <EuiSpacer size="s" />
         <EuiProgress
@@ -254,70 +353,129 @@ export const MranvApp = ({ basename, notifications, http, navigation }: MranvApp
       <EuiSpacer />
 
       <EuiFlexGroup wrap>
-        {componentStatuses.map((component, index) => (
-          <EuiFlexItem key={index} style={{ minWidth: '350px' }}>
-            <EuiPanel>
-              <EuiFlexGroup alignItems="center" gutterSize="s">
-                <EuiFlexItem>
-                  <EuiTitle size="xs">
-                    <h4>{component.name}</h4>
-                  </EuiTitle>
-                  <EuiSpacer size="s" />
-                  <EuiFlexGroup alignItems="center" gutterSize="s">
-                    <EuiFlexItem grow={false}>
-                      <EuiHealth color="success">{component.status}</EuiHealth>
-                    </EuiFlexItem>
-                    <EuiFlexItem grow={false}>
-                      <EuiToolTip content="CPU Usage">
-                        <EuiBadge color={component.cpu > 80 ? 'danger' : 'primary'}>
-                          CPU: {Math.round(component.cpu)}%
-                        </EuiBadge>
-                      </EuiToolTip>
-                    </EuiFlexItem>
-                    <EuiFlexItem grow={false}>
-                      <EuiToolTip content="Memory Usage">
-                        <EuiBadge color={component.memory > 80 ? 'danger' : 'warning'}>
-                          MEM: {Math.round(component.memory)}%
-                        </EuiBadge>
-                      </EuiToolTip>
-                    </EuiFlexItem>
-                  </EuiFlexGroup>
-                </EuiFlexItem>
-                <EuiFlexItem grow={false}>
-                  <EuiStat
-                    title={component.detections.toString()}
-                    description="Detections"
-                    textAlign="right"
-                    titleColor={component.detections > 100 ? 'danger' : 'primary'}
-                  />
-                </EuiFlexItem>
-              </EuiFlexGroup>
-              {component.scanning && (
-                <>
-                  <EuiSpacer size="s" />
-                  <EuiProgress size="xs" color="accent" />
-                  <EuiText size="xs" color="subdued">
-                    <p>Active scan in progress...</p>
-                  </EuiText>
-                </>
-              )}
-            </EuiPanel>
-          </EuiFlexItem>
-        ))}
+        {componentStatuses.map((component, index) => {
+          // Get appropriate icon for each component
+          const getComponentIcon = (name: string) => {
+            switch (name) {
+              case 'Endpoint Detection & Response':
+                return 'node';
+              case 'User Behavior Analytics':
+                return 'users';
+              case 'Host-Based Intrusion Detection System':
+                return 'monitor';
+              case 'Signature-Based Malware Detection & Scanning Engine':
+                return 'filter';
+              case 'NGAV + EDR':
+                return 'shield';
+              case 'LLM Malware Detection':
+                return 'ml';
+              default:
+                return 'app';
+            }
+          };
+
+          return (
+            <EuiFlexItem key={index} style={{ minWidth: '350px' }}>
+              <EuiPanel>
+                <EuiFlexGroup alignItems="center" gutterSize="s">
+                  <EuiFlexItem>
+                    <EuiTitle size="xs">
+                      <h4>
+                        <EuiIcon
+                          type={getComponentIcon(component.name)}
+                          size="m"
+                          style={{ marginRight: '8px' }}
+                        />
+                        {component.name}
+                      </h4>
+                    </EuiTitle>
+                    <EuiSpacer size="s" />
+                    <EuiFlexGroup alignItems="center" gutterSize="s">
+                      <EuiFlexItem grow={false}>
+                        <EuiHealth color="success">
+                          <EuiIcon
+                            type="dot"
+                            size="m"
+                            style={{ marginRight: '4px' }}
+                          />
+                          {component.status}
+                        </EuiHealth>
+                      </EuiFlexItem>
+                      <EuiFlexItem grow={false}>
+                        <EuiToolTip content="CPU Usage">
+                          <EuiBadge color={component.cpu > 80 ? 'danger' : 'primary'}>
+                            <EuiIcon
+                              type="processor"
+                              size="s"
+                              style={{ marginRight: '4px' }}
+                            />
+                            CPU: {Math.round(component.cpu)}%
+                          </EuiBadge>
+                        </EuiToolTip>
+                      </EuiFlexItem>
+                      <EuiFlexItem grow={false}>
+                        <EuiToolTip content="Memory Usage">
+                          <EuiBadge color={component.memory > 80 ? 'danger' : 'warning'}>
+                            <EuiIcon
+                              type="memory"
+                              size="s"
+                              style={{ marginRight: '4px' }}
+                            />
+                            MEM: {Math.round(component.memory)}%
+                          </EuiBadge>
+                        </EuiToolTip>
+                      </EuiFlexItem>
+                    </EuiFlexGroup>
+                  </EuiFlexItem>
+                  <EuiFlexItem grow={false}>
+                    <EuiStat
+                      title={component.detections.toString()}
+                      description={
+                        <span>
+                          <EuiIcon
+                            type="flag"
+                            size="s"
+                            style={{ marginRight: '4px' }}
+                          />
+                          Detections
+                        </span>
+                      }
+                      textAlign="right"
+                      titleColor={component.detections > 100 ? 'danger' : 'primary'}
+                    />
+                  </EuiFlexItem>
+                </EuiFlexGroup>
+                {component.scanning && (
+                  <>
+                    <EuiSpacer size="s" />
+                    <EuiProgress size="xs" color="accent" />
+                    <EuiText size="xs" color="subdued">
+                      <p>
+                        <EuiIcon
+                          type="refresh"
+                          size="s"
+                          style={{ marginRight: '4px' }}
+                        />
+                        Active scan in progress...
+                      </p>
+                    </EuiText>
+                  </>
+                )}
+              </EuiPanel>
+            </EuiFlexItem>
+          );
+        })}
       </EuiFlexGroup>
     </EuiPageBody>
   );
-
   const renderAnalytics = () => (
     <EuiPageBody>
-      <EuiPageHeader>
-        <EuiTitle size="l">
-          <h1>
-            <EuiIcon type="visArea" size="xl" />{' '}
-            Security Analytics
-          </h1>
-        </EuiTitle>
-      </EuiPageHeader>
+      <EuiTitle size="l" className="eui-textCenter">
+        <h1>
+          <EuiIcon type="visArea" size="xl" />{' '}
+          Security Analytics
+        </h1>
+      </EuiTitle>
 
       <EuiSpacer />
 
@@ -401,19 +559,16 @@ export const MranvApp = ({ basename, notifications, http, navigation }: MranvApp
 
   const renderComponentDetails = () => (
     <EuiPageBody>
-      <EuiPageHeader>
-        <EuiTitle size="l">
-          <h1>
-            <EuiIcon type="apps" size="xl" />{' '}
-            Security Components
-          </h1>
-        </EuiTitle>
-      </EuiPageHeader>
+      <EuiTitle size="l" className="eui-textCenter">
+        <h1>
+          <EuiIcon type="apps" size="xl" />{' '}
+          Security Components
+        </h1>
+      </EuiTitle>
 
       <EuiSpacer />
 
       {componentStatuses.map((component, idx) => (
-
         <React.Fragment key={idx}>
           <EuiPanel>
             <EuiFlexGroup>
@@ -424,7 +579,7 @@ export const MranvApp = ({ basename, notifications, http, navigation }: MranvApp
                 <EuiSpacer size="s" />
                 <EuiFlexGroup alignItems="center" gutterSize="s">
                   <EuiFlexItem grow={false}>
-                    <EuiHealth color={component.status === 'active' ? 'success' : 'danger'}>
+                  <EuiHealth color={component.status === 'active' ? 'success' : 'danger'}>
                       {component.status.toUpperCase()}
                     </EuiHealth>
                   </EuiFlexItem>
@@ -613,12 +768,10 @@ export const MranvApp = ({ basename, notifications, http, navigation }: MranvApp
           </EuiPage>
 
           <EuiGlobalToastList
-            toasts={toasts.map((toast, idx) => ({
-              id: idx.toString(),
-              title: toast.title,
-              color: toast.color,
-            }))}
-            dismissToast={() => setToasts([])}
+            toasts={toasts}
+            dismissToast={(removedToast) => {
+              setToasts(prev => prev.filter(toast => toast.id !== removedToast.id));
+            }}
             toastLifeTimeMs={3000}
           />
         </>

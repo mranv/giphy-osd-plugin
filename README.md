@@ -1,4 +1,4 @@
-# mranv
+# OpenArmor Security Dashboards
 
 A OpenSearch Dashboards plugin
 

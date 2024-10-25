@@ -1,0 +1,7 @@
+{
+  "prefix": "mranv",
+  "paths": {
+    "mranv": "."
+  },
+  "translations": ["translations/ja-JP.json"]
+}

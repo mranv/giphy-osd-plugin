@@ -20,4 +20,3 @@ setting up your development environment.
       <dd>Execute this to create a distributable version of this plugin that can be installed in OpenSearch Dashboards
       </dd>
     </dl>
-# giphy-osd-plugin
